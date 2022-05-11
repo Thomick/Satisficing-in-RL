@@ -49,7 +49,8 @@ class BernoulliBandit(Bandit):
         else:
             return 0.
 
-def ucb(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
+def ucb(bandit,satisfaction_level,nb_step,parameter=1):
+    confidence_multiplier = parameter
     nb_arm = bandit.nb_arm
     rewards = [] # Empirical reward at each step
     regrets = [] # Satisfying regret at each step
@@ -87,7 +88,8 @@ def ucb(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
         expectations.append(bandit.means[chosen_arm])
     return rewards,regrets,expectations
 
-def algo1(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
+def algo1(bandit,satisfaction_level,nb_step,parameter=1):
+    confidence_multiplier = parameter
     nb_arm = bandit.nb_arm
     rewards = [] # Empirical reward at each step
     regrets = [] # Satisfying regret at each step
@@ -133,7 +135,8 @@ def algo1(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
 
 
 
-def algo3(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
+def algo3(bandit,satisfaction_level,nb_step,parameter=1):
+    confidence_multiplier = parameter
     nb_arm = bandit.nb_arm
     rewards = [] # Empirical reward at each step
     regrets = [] # Satisfying regret at each step
@@ -177,7 +180,8 @@ def algo3(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
         expectations.append(bandit.means[chosen_arm])
     return rewards,regrets,expectations
 
-def algo3xucb(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
+def algo3xucb(bandit,satisfaction_level,nb_step,parameter=1):
+    confidence_multiplier = parameter
     nb_arm = bandit.nb_arm
     rewards = [] # Empirical reward at each step
     regrets = [] # Satisfying regret at each step
@@ -228,7 +232,8 @@ def algo3xucb(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
     return rewards,regrets,expectations
 
 
-def algo3xavg(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
+def algo3xavg(bandit,satisfaction_level,nb_step,parameter=1):
+    confidence_multiplier = parameter
     nb_arm = bandit.nb_arm
     rewards = [] # Empirical reward at each step
     regrets = [] # Satisfying regret at each step
@@ -273,13 +278,64 @@ def algo3xavg(bandit,satisfaction_level,nb_step,confidence_multiplier=1):
         expectations.append(bandit.means[chosen_arm])
     return rewards,regrets,expectations
 
+def bernoulli_thompson(bandit,satisfaction_level,nb_step,parameter=1):
+    nb_arm = bandit.nb_arm
+    rewards = [] # Empirical reward at each step
+    regrets = [] # Satisfying regret at each step
+    expectations = [] # Expected reward at each step (for the played policy)
+    nb_pull = np.zeros(nb_arm) # Number of pull of each arm
+    arm_rewards = np.zeros(nb_arm) # Empirical total reward of each arm
+    alpha = np.ones(nb_arm)
+    beta = np.ones(nb_arm)
 
-def experiment(algo,bandits,satisfaction_level,nb_step,nb_repetition=1,confidence_multiplier=1):
+    for i in range(nb_step):
+        theta = np.random.beta(alpha, beta)
+        chosen_arm = np.argmax(theta)
+
+        # Get reward
+        reward = bandit.pull(chosen_arm)
+        # Update distriutions
+        alpha[chosen_arm] += reward
+        beta[chosen_arm] += 1 - reward
+        # Update metrics
+        nb_pull[chosen_arm] += 1
+        arm_rewards[chosen_arm] += reward
+        rewards.append(reward)
+        regrets.append(max(0,satisfaction_level-bandit.means[chosen_arm]))
+        expectations.append(bandit.means[chosen_arm])
+    return rewards,regrets,expectations
+
+def epsilon_greedy(bandit,satisfaction_level,nb_step,parameter=1):
+    epsilon = parameter
+    nb_arm = bandit.nb_arm
+    rewards = [] # Empirical reward at each step
+    regrets = [] # Satisfying regret at each step
+    expectations = [] # Expected reward at each step (for the played policy)
+    nb_pull = np.zeros(nb_arm) # Number of pull of each arm
+    arm_rewards = np.zeros(nb_arm) # Empirical total reward of each arm
+
+    for i in range(nb_step):
+        if np.random.uniform(0,1) > epsilon:
+            chosen_arm = np.argmax(arm_rewards/np.maximum(nb_pull,1))
+        else:
+            chosen_arm = np.random.randint(0, nb_arm)
+
+        # Get reward
+        reward = bandit.pull(chosen_arm)
+        # Update metrics
+        nb_pull[chosen_arm] += 1
+        arm_rewards[chosen_arm] += reward
+        rewards.append(reward)
+        regrets.append(max(0,satisfaction_level-bandit.means[chosen_arm]))
+        expectations.append(bandit.means[chosen_arm])
+    return rewards,regrets,expectations
+
+def experiment(algo,bandits,satisfaction_level,nb_step,nb_repetition=1,parameter=1):
     print(f"Experiment ({nb_repetition} runs)")
     rewards,regrets,expectations= [],[],[]
     for bandit in bandits:  # In case we want to average over multiple bandit instances
         for _ in progressbar(range(nb_repetition)):  # Repetition of the experiment on the bandit instance
-            rew,reg,exp = algo(bandit, satisfaction_level, nb_step,confidence_multiplier=confidence_multiplier)
+            rew,reg,exp = algo(bandit, satisfaction_level, nb_step,parameter=parameter)
             rewards.append(rew)
             regrets.append(reg)
             expectations.append(exp)
