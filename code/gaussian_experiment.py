@@ -1,4 +1,6 @@
 from bandit import *
+import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 15})
 
 satisfaction_level = 0.8
 nb_arm = 20
@@ -11,12 +13,11 @@ bandits = [GaussianBandit(nb_arm,means=[i/nb_arm for i in range(nb_arm)],sigmas=
 
 ######################## Experiment with 1 run of the algorithms ########################
 nb_repetition = 1
+
 rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition)
 print("Number of non-satisfying actions played : ",np.sum(expectations_ucb<satisfaction_level))
-
 rewards_algo3,regrets_algo3,expectations_algo3 = experiment(algo3,bandits, satisfaction_level, nb_step, nb_repetition)
 print("Number of non-satisfying actions played : ",np.sum(expectations_algo3<satisfaction_level))
-
 plt.figure(figsize=(8, 6))
 plt.plot(expectations_ucb, '.',label="UCB1")
 plt.plot(expectations_algo3, '.', label="Algorithm 3")
@@ -43,10 +44,6 @@ rewards_algo3xucb,regrets_algo3xucb,expectations_algo3xucb = experiment(algo3xuc
 plt.plot(np.cumsum(regrets_algo3xucb), label="Algorithm 3 x UCB1")
 rewards_algo3xavg,regrets_algo3xavg,expectations_algo3xavg = experiment(algo3xavg,bandits, satisfaction_level, nb_step, nb_repetition)
 plt.plot(np.cumsum(regrets_algo3xavg), label="Algorithm 3 x Average reward")
-#rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition,parameter=0.5)
-#plt.plot(np.cumsum(regrets_ucb), label="UCB1 (confidence * 0.5)")
-# Plot bound ?
-# plt.plot(np.ones_like(regrets_algo3)*compute_bound_algo3_sat(bandits[0], satisfaction_level),label="Regret bound for Algorithm 3")
 #plt.title("Average satisficing regret over 50 runs\nRealizable case - Gaussian rewards")
 plt.xlabel("Time step")
 plt.ylabel("Statisficing regret")
@@ -62,7 +59,7 @@ print("Not realizable case")
 satisfaction_level = 1
 nb_step = 50000
 
-rewards_algo3,regrets_algo3,expectations_algo3 = experiment(algo3,bandits, satisfaction_level, nb_step, nb_repetition)
+rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition)
 rewards_algo3,regrets_algo3,expectations_algo3 = experiment(algo3,bandits, satisfaction_level, nb_step, nb_repetition)
 plt.plot(np.cumsum(regrets_ucb),label="UCB1")
 plt.plot(np.cumsum(regrets_algo3), label="Algorithm 3")
@@ -76,7 +73,7 @@ plt.ylabel("Regret")
 plt.legend()
 plt.tight_layout()
 
-
+'''
 ######################## Different satisfaction levels ########################
 print("Difference depending on satisfaction level")
 plt.figure(figsize=(8, 6))
@@ -91,10 +88,12 @@ rewards_algo3,regrets_algo3,expectations_algo3 = experiment(algo3,bandits, 0.75,
 plt.plot(np.cumsum(regrets_algo3), label=r"$S=0.75$")
 rewards_algo3,regrets_algo3,expectations_algo3 = experiment(algo3,bandits, np.max(bandits[0].means), nb_step, nb_repetition)
 plt.plot(np.cumsum(regrets_algo3), label=r"$S=\rho^*$")
-# plt.title("Average satisficing regret over 50 runs\nAlgorithm 3 - Gaussian rewards")
+plt.title("Average satisficing regret over 50 runs\nAlgorithm 3 - Gaussian rewards")
 plt.xlabel("Time step")
 plt.ylabel("Satisficing regret")
 plt.legend()
 
 plt.tight_layout()
+'''
+
 plt.show()

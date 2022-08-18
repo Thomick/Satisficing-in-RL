@@ -1,4 +1,6 @@
 from bandit import *
+import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 15})
 
 satisfaction_level = 0.8
 nb_arm = 20
@@ -27,7 +29,6 @@ rewards_algo3xavg,regrets_algo3xavg,expectations_algo3xavg = experiment(algo3xav
 plt.plot(np.cumsum(regrets_algo3xavg), label="Algorithm 3 x Average reward")
 rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition,parameter=0.5)
 plt.plot(np.cumsum(regrets_ucb), label="UCB1 (confidence * 0.5)")
-rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition,parameter=0.25)
 #plt.title("Average satisficing regret over 50 runs\nRealizable case - Bernoulli rewards")
 plt.xlabel("Time step")
 plt.ylabel("Satisficing regret")
@@ -56,7 +57,7 @@ plt.ylabel("Regret")
 plt.legend()
 
 plt.tight_layout()
-
+'''
 ######################## Different satisfaction levels ########################
 print("Difference depending on satisfaction level")
 plt.figure(figsize=(8, 6))
@@ -76,17 +77,17 @@ plt.xlabel("Time step")
 plt.ylabel("Satisficing regret")
 plt.legend()
 plt.tight_layout()
-
+'''
 ######################## Comparison with other algorithms ########################
 
 
-# Experiment with 20 arms
+##### Experiment with 20 arms
 print("Realizable case")
 plt.figure(figsize=(8, 6))
 
 nb_step = 10000
 nb_repetition = 50
-c = 0.1
+c = 1
 
 rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition)
 rewards_algo3,regrets_algo3,expectations_algo3 = experiment(algo3,bandits, satisfaction_level, nb_step, nb_repetition)
@@ -107,25 +108,25 @@ plt.tight_layout()
 
 
 
-# Experiment with 200 arms
+##### Experiment with 200 arms
 print("Realizable case")
 plt.figure(figsize=(8, 6))
 
 nb_step = 10000
 nb_repetition = 50
-c = 0.1
+c = 1
 nb_arm = 200
 
+# New bandit instance
 bandits = [BernoulliBandit(nb_arm,means=[i/nb_arm for i in range(nb_arm)])]
 
 rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition)
 rewards_algo3,regrets_algo3,expectations_algo3 = experiment(algo3,bandits, satisfaction_level, nb_step, nb_repetition)
-
 plt.plot(np.cumsum(regrets_ucb),label="UCB1")
 plt.plot(np.cumsum(regrets_algo3), label="Algorithm 3")
-rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition,parameter=c)
+rewards_ucb,regrets_ucb,expectations_ucb = experiment(ucb, bandits, satisfaction_level, nb_step, nb_repetition,parameter=0.5)
 plt.plot(np.cumsum(regrets_ucb), label="UCB1 (confidence * 0.5)")
-rewards_greedy,regrets_greedy,expectations_greedy = experiment(epsilon_greedy, bandits, satisfaction_level, nb_step, nb_repetition,parameter=epsilon)
+rewards_greedy,regrets_greedy,expectations_greedy = experiment(epsilon_greedy, bandits, satisfaction_level, nb_step, nb_repetition,parameter=c)
 plt.plot(np.cumsum(regrets_greedy), label="Epsilon greedy")
 rewards_thompson,regrets_thompson,expectations_thompson = experiment(bernoulli_thompson, bandits, satisfaction_level, nb_step, nb_repetition)
 plt.plot(np.cumsum(regrets_thompson), label="Thompson sampling")
@@ -135,4 +136,5 @@ plt.ylabel("Satisficing regret")
 plt.legend()
 
 plt.tight_layout()
+
 plt.show()

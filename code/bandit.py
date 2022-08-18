@@ -1,9 +1,9 @@
 # Regret Bounds for Satisficing in Multi-Armed Bandit Problems
 #
-# This file contains the code for two class of bandits (Bernoulli rewards and Gaussian rewards)
+# This file contains the code for two classes of bandits (Bernoulli rewards and Gaussian rewards)
 # and the algorithms considered in the paper
 #
-# The bandits take parameters to initialize randomly the rewards distributions
+# The bandits take parameters to initialize randomly their reward distributions
 # but this behaviour can be overwritten by specifying directly the desired distributions for the arms
 #
 # The algorithms are designed to run a simulation once from scratch and for a given number of steps
@@ -16,10 +16,14 @@
 # 
 # The experiment function can be used to run the algorithm multiple times and/or on different bandits instances
 # and return the average of the metrics
+#
+# The variable below can be set to an integer value in order to run all the experiments with the same seed
+# The value seed=1 allows to produce results similar to the ones presented in the paper
+seed = 1 #None
+# This seed is used to reset the random number generator before each new experiment
 
 
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
 
 # Simple CLI progressbar that do not need a particular library 
@@ -54,7 +58,7 @@ class Bandit():
         return self.means[arm]
 
 # Bandit with Gaussian distributed rewards
-# If unspecified, the standard deviation are set to 1 by default
+# If unspecified, the standard deviations are set to 1 by default
 class GaussianBandit(Bandit):
     def __init__(self, nb_arm, range = [0, 1], means=None, sigmas = None):
         super().__init__(nb_arm,range=range,means=means)
@@ -195,8 +199,12 @@ def algo3(bandit,satisfaction_level,nb_step,parameter=1):
         ratio = (ucb - np.maximum(lcb,satisfaction_level))/confidence
 
         max_ucb_arm = np.argmax(ucb)
-        if ucb[max_ucb_arm] >= satisfaction_level:
+        max_avg_arm = np.argmax(emp_avg)
+        if emp_avg[max_avg_arm] >= satisfaction_level:
             chosen_arm = np.argmax(ratio)
+        elif ucb[max_ucb_arm] >= satisfaction_level:
+            indices = np.where(ucb >= satisfaction_level)[0]
+            chosen_arm = np.random.choice(indices)
         else:
             chosen_arm = max_ucb_arm
 
@@ -250,6 +258,9 @@ def algo3xucb(bandit,satisfaction_level,nb_step,parameter=1):
                 mi = i
         if mi != -1:
             chosen_arm = mi
+        elif ucb[max_ucb_arm] >= satisfaction_level:
+            indices = np.where(ucb >= satisfaction_level)[0]
+            chosen_arm = np.random.choice(indices)
         else:
             chosen_arm = max_ucb_arm
 
@@ -295,11 +306,14 @@ def algo3xavg(bandit,satisfaction_level,nb_step,parameter=1):
         emp_avg = arm_rewards/nb_pull
         ucb = emp_avg + confidence
 
+        max_ucb_arm = np.argmax(ucb)
         max_avg_arm = np.argmax(emp_avg)
-        if emp_avg[max_avg_arm]>= satisfaction_level:
-            chosen_arm = max_avg_arm
+        if emp_avg[max_avg_arm] >= satisfaction_level:
+            chosen_arm = np.argmax(emp_avg)
+        elif ucb[max_ucb_arm] >= satisfaction_level:
+            indices = np.where(ucb >= satisfaction_level)[0]
+            chosen_arm = np.random.choice(indices)
         else:
-            max_ucb_arm = np.argmax(ucb)
             chosen_arm = max_ucb_arm
 
         # Update rewards and metrics
@@ -380,8 +394,10 @@ def epsilon_greedy(bandit,satisfaction_level,nb_step,parameter=1):
 # satisfaction_level : Satisfaction level
 # nb_step : Duration of each run
 # nb_repetion : Number of repetition of the experiment on each instance in the parameter `bandit`
-# parameter : Optional parameter of the algorithm
+# parameter : Optional parameter for the algorithm
 def experiment(algo,bandits,satisfaction_level,nb_step,nb_repetition=1,parameter=1):
+    if seed != None:
+        np.random.seed(seed)
     print(f"Experiment ({nb_repetition} runs)")
     rewards,regrets,expectations= [],[],[]
     for bandit in bandits:  # In case we want to average over multiple bandit instances
